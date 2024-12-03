@@ -1,2 +1,3 @@
 # loxwell
-Lox implementation in C#.
+[Lox](https://github.com/munificent/craftinginterpreters)
+implementation in C#.
