@@ -3,18 +3,18 @@
 public class Lox {
   private static bool _hasError = false;
 
-  static void Main(string[] args) {
-    if (args.Length > 1) {
-      Console.WriteLine("Usage: loxwell [script]");
-      Environment.Exit(64);
-    } else if (args.Length == 1) {
-      RunFile(args[0]);
-    } else {
-      RunPrompt();
-    }
+  // static void Main(string[] args) {
+  //   if (args.Length > 1) {
+  //     Console.WriteLine("Usage: loxwell [script]");
+  //     Environment.Exit(64);
+  //   } else if (args.Length == 1) {
+  //     RunFile(args[0]);
+  //   } else {
+  //     RunPrompt();
+  //   }
 
-    Environment.Exit(0);
-  }
+  //   Environment.Exit(0);
+  // }
 
   public static void Error(int line, string message) {
     Report(line, "", message);
