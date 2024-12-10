@@ -1,6 +1,4 @@
-﻿using System.Runtime.InteropServices;
-
-namespace loxwell;
+﻿namespace loxwell;
 
 public class Lox {
   private static bool _hasError = false;
