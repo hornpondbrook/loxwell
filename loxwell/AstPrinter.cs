@@ -17,7 +17,7 @@ public class AstPrinter : Expr.Visitor<string>
   //   Console.WriteLine(new AstPrinter().Print(expression));    
   // }
 
-  string Print(Expr expr) {
+  public string Print(Expr expr) {
     return expr.Accept(this);
   }
 

@@ -20,6 +20,14 @@ public class Lox {
     Report(line, "", message);
   }
 
+  public static void Error(Token token, string message) {
+    if (token.Type == TokenType.EOF) {
+      Report(token.Line, " at end", message);
+    } else {
+      Report(token.Line, $" at '{token.Lexeme}'", message);
+    }
+  }
+
   private static void RunFile(string path) {
     try {
       string fileContents = File.ReadAllText(path);
@@ -53,9 +61,17 @@ public class Lox {
     List<Token> tokens = scanner.ScanTokens();
 
     // For now, just print the tokens
-    foreach (Token token in tokens) {
-      Console.WriteLine(token);
-    } 
+    // foreach (Token token in tokens) {
+    //   Console.WriteLine(token);
+    // } 
+
+    Parser parser = new Parser(tokens);
+    Expr expression = parser.Parse();
+
+    // Stop if there was a syntax error.
+    if (_hasError) return;
+
+    Console.WriteLine(new AstPrinter().Print(expression));
   }
 
   private static void Report(int line, string where, string message) {
