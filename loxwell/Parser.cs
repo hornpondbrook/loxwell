@@ -5,7 +5,8 @@ using static TokenType;
 
 // Parse for the following expression grammar
 /*
-expression     → equality ;
+expression     → comma ;
+comma          → equality ("," equality)* ;
 equality       → comparison ( ( "!=" | "==" ) comparison )* ;
 comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
 term           → factor ( ( "-" | "+" ) factor )* ;
@@ -34,9 +35,20 @@ public class Parser {
   }
 
   private Expr Expression() {
-    return Equality();
+    return Comma();
   }
 
+  private Expr Comma() {
+    Expr expr = Equality();
+
+    while (Match(COMMA)) {
+      Token operater = Previous();
+      Expr right = Equality();
+      expr = new Expr.Binary(expr, operater, right);
+    }
+
+    return expr;
+  }
   private Expr Equality() {
     Expr expr = Comparison();
 
