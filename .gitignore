@@ -400,3 +400,5 @@ FodyWeavers.xsd
 # Custom files
 daily.md
 z.md
+.vscode/
+.file/

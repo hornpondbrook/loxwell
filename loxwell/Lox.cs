@@ -1,7 +1,9 @@
 ﻿namespace loxwell;
 
 public class Lox {
+  private static readonly Interpreter interpreter = new Interpreter();
   private static bool _hasError = false;
+  private static bool _hasRuntimeError = false;
 
   static void Main(string[] args) {
     if (args.Length > 1) {
@@ -27,6 +29,12 @@ public class Lox {
       Report(token.Line, $" at '{token.Lexeme}'", message);
     }
   }
+  
+  internal static void RuntimeError(RuntimeError error)
+  {
+    Console.WriteLine($"{error.Message}\n[line {error.Token.Line}]");
+    _hasRuntimeError = true;
+  }
 
   private static void RunFile(string path) {
     try {
@@ -39,6 +47,7 @@ public class Lox {
 
     // Indicate an error in the exit code
     if (_hasError) Environment.Exit(65);
+    if (_hasRuntimeError) Environment.Exit(70);
   }
 
   private static void RunPrompt() {
@@ -71,11 +80,13 @@ public class Lox {
     // Stop if there was a syntax error.
     if (_hasError) return;
 
-    Console.WriteLine(new AstPrinter().Print(expression));
+    // Console.WriteLine(new AstPrinter().Print(expression));
+    interpreter.Interpret(expression);
   }
 
   private static void Report(int line, string where, string message) {
     Console.WriteLine($"[line {line}] Error{where}: {message}");
     _hasError = true;
   }
+
 }
