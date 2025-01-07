@@ -3,16 +3,18 @@ namespace loxwell;
 using System.Collections;
 using static TokenType;
 
-public class Interpreter : Expr.Visitor<object>
+public class Interpreter : Expr.Visitor<object>, Stmt.Visitor<object>
 {
-  public void Interpret(Expr expression) {
+  public void Interpret(List<Stmt> statements) {
     try {
-      object value = Evaluate(expression);
-      Console.WriteLine(Stringify(value));
+      foreach (Stmt statement in statements) {
+        Execute(statement);
+      }
     } catch (RuntimeError error) {
       Lox.RuntimeError(error);
     }
   }
+
   public object VisitBinaryExpr(Expr.Binary expr) {
     object left = Evaluate(expr.Left);
     object right = Evaluate(expr.Right);
@@ -79,6 +81,23 @@ public class Interpreter : Expr.Visitor<object>
     return null;
   }
 
+  public object VisitExpressionStmt(Stmt.ExpressionStmt stmt)
+  {
+    Evaluate(stmt.Expression);
+    return null;
+  }
+
+  public object VisitPrintStmt(Stmt.PrintStmt stmt)
+  {
+    object value = Evaluate(stmt.Expression);
+    Console.WriteLine(Stringify(value));    
+    return null;
+  }
+
+  private void Execute(Stmt statement) {
+    statement.Accept(this);
+  }
+
   private object Evaluate(Expr expr) {
     return expr.Accept(this);
   }
@@ -118,4 +137,5 @@ public class Interpreter : Expr.Visitor<object>
 
     return obj.ToString()!;
   }
+
 }

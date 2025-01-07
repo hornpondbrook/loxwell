@@ -75,13 +75,13 @@ public class Lox {
     // } 
 
     Parser parser = new Parser(tokens);
-    Expr expression = parser.Parse();
+    List<Stmt> statements = parser.Parse();
 
     // Stop if there was a syntax error.
     if (_hasError) return;
 
     // Console.WriteLine(new AstPrinter().Print(expression));
-    interpreter.Interpret(expression);
+    interpreter.Interpret(statements);
   }
 
   private static void Report(int line, string where, string message) {

@@ -18,6 +18,11 @@ public class GenerateAst {
       "Unary    : Token operater, Expr right"      
     });
 
+    DefineAst(outputDir, "Stmt", new List<string> {
+      "ExpressionStmt : Expr expression",
+      "PrintStmt      : Expr expression"
+    });
+
   }
 
   private static void DefineAst(string outputDir, string baseName, List<string> types)
@@ -56,7 +61,8 @@ public class GenerateAst {
 
     foreach (string type in types) {
       string typeName = type.Split(':')[0].Trim();
-      writer.WriteLine($"    R Visit{typeName}{baseName} ({typeName} {baseName.ToLower()});");
+      // There is no need to append baseName (like Stmt) for some type name like ExpressionStmt
+      writer.WriteLine($"    R Visit{typeName}{(typeName.EndsWith(baseName) ? "" : baseName)} ({typeName} {baseName.ToLower()});");
     }
 
     writer.WriteLine("  }");
@@ -81,7 +87,7 @@ public class GenerateAst {
     // Visitor pattern.
     writer.WriteLine();
     writer.WriteLine($"    public override R Accept<R>(Visitor<R> visitor) {{");
-    writer.WriteLine($"      return visitor.Visit{className}{baseName}(this);");
+    writer.WriteLine($"      return visitor.Visit{className}{(className.EndsWith(baseName) ? "" : baseName)}(this);");
     writer.WriteLine("    }");
 
     // Fields

@@ -16,6 +16,15 @@ primary        → NUMBER | STRING | "true" | "false" | "nil"
                | "(" expression ")" ;
 */
 
+// Parse for the program with two types of statement
+/*
+program        → statement* EOF ;
+statement      → exprStmt | printStmt ;
+exprStmt       → expression ";" ;
+printStmt      → "print" expression ";" ;
+*/
+
+
 public class Parser {
   private class ParseError : Exception {}
   private readonly List<Token> _tokens;
@@ -25,12 +34,31 @@ public class Parser {
     _tokens = tokens;
   }
 
-  public Expr Parse() {
-    try {
-      return Expression();
-    } catch (ParseError error) {
-      return null;
+  public List<Stmt> Parse() {
+    List<Stmt> statements = new List<Stmt>();
+    while (!IsAtEnd()) {
+      statements.Add(Statement());
     }
+
+    return statements;
+  }
+
+  private Stmt Statement() {
+    if (Match(PRINT)) return PrintStatement();
+
+    return ExpressionStatement();
+  }
+
+  private Stmt PrintStatement() {
+    Expr value = Expression();
+    Consume(SEMICOLON, "Expect ';' after value.");
+    return new Stmt.PrintStmt(value);
+  }
+
+  private Stmt ExpressionStatement() {
+    Expr expr = Expression();
+    Consume(SEMICOLON, "Expect ';' after value.");
+    return new Stmt.ExpressionStmt(expr);
   }
 
   private Expr Expression() {
