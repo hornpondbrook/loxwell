@@ -54,7 +54,7 @@ public class Lox {
     Console.WriteLine("Enter input (press Ctrl+D to exit):");
     for (;;) {
       Console.Write("> ");
-      string? line = Console.ReadLine();
+      string line = Console.ReadLine();
       if (line == null) {
         Console.WriteLine("Existing...");
         break;
