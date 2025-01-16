@@ -12,15 +12,19 @@ public class GenerateAst {
     }
     string outputDir = args[0];
     DefineAst(outputDir, "Expr", new List<string> {
+      "Assign   : Token name, Expr value",
       "Binary   : Expr left, Token operater, Expr right",
       "Grouping : Expr expression",
       "Literal  : Object value",
-      "Unary    : Token operater, Expr right"      
+      "Unary    : Token operater, Expr right",
+      "Variable : Token name"      
     });
 
     DefineAst(outputDir, "Stmt", new List<string> {
+      "BlockStmt      : List<Stmt> statements",
       "ExpressionStmt : Expr expression",
-      "PrintStmt      : Expr expression"
+      "PrintStmt      : Expr expression",
+      "VarStmt        : Token name, Expr initializer" 
     });
 
   }
@@ -110,7 +114,7 @@ public class GenerateAst {
       if (!string.IsNullOrWhiteSpace(word)) {
         sb.Append(char.ToUpper(word[0]));
         if (word.Length > 1) {
-          sb.Append(word.Substring(1).ToLower());
+          sb.Append(word.Substring(1));
         }
         sb.Append(" ");
       }

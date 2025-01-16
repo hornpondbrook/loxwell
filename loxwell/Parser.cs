@@ -5,21 +5,31 @@ using static TokenType;
 
 // Parse for the following expression grammar
 /*
-expression     → equality ;
+expression     → assignment ;
+assignment     → IDENTIFIER "=" assignment
+               | equality ;
 equality       → comparison ( ( "!=" | "==" ) comparison )* ;
 comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
 term           → factor ( ( "-" | "+" ) factor )* ;
 factor         → unary ( ( "/" | "*" ) unary )* ;
 unary          → ( "!" | "-" ) unary
                | primary ;
-primary        → NUMBER | STRING | "true" | "false" | "nil"
-               | "(" expression ")" ;
+primary        → "true" | "false" | "nil"
+               | NUMBER | STRING
+               | "(" expression ")"
+               | IDENTIFIER ;
 */
 
 // Parse for the program with two types of statement
 /*
-program        → statement* EOF ;
-statement      → exprStmt | printStmt ;
+program        → declaration* EOF ;
+declaration    → varDecl
+               | statement ;
+varDecl        → "var" IDENTIFIER ( "=" expression )? ";" ;              
+statement      → exprStmt
+               | printStmt
+               | block ;
+block          → "{" declaration* "}" ;               
 exprStmt       → expression ";" ;
 printStmt      → "print" expression ";" ;
 */
@@ -37,16 +47,52 @@ public class Parser {
   public List<Stmt> Parse() {
     List<Stmt> statements = new List<Stmt>();
     while (!IsAtEnd()) {
-      statements.Add(Statement());
+      statements.Add(Declaration());
     }
 
     return statements;
   }
 
+  private Stmt Declaration() {
+    try {
+      if (Match(VAR)) return VarDeclaration();
+      
+      return Statement();
+    } catch (ParseError error) {
+      Synchronize();
+      return null;
+    }
+
+  }
+
+  private Stmt VarDeclaration() {
+    Token name = Consume(IDENTIFIER, "Expected variable name.");
+
+    Expr initializer = null;
+    if (Match(EQUAL)) {
+      initializer = Expression();
+    }
+
+    Consume(SEMICOLON, "Expected ';' after variable declaration.");
+    return new Stmt.VarStmt(name, initializer);
+  }
+
   private Stmt Statement() {
     if (Match(PRINT)) return PrintStatement();
+    if (Match(LEFT_BRACE)) return new Stmt.BlockStmt(Block());
 
     return ExpressionStatement();
+  }
+
+  private List<Stmt> Block() {
+    List<Stmt> statements = new List<Stmt>();
+
+    while (!Check(RIGHT_BRACE) && !IsAtEnd()) {
+      statements.Add(Declaration());
+    }
+
+    Consume(RIGHT_BRACE, "Expect '}' after block.");
+    return statements;
   }
 
   private Stmt PrintStatement() {
@@ -62,7 +108,25 @@ public class Parser {
   }
 
   private Expr Expression() {
-    return Equality();
+    return Assignment();
+  }
+
+  private Expr Assignment() {
+    Expr expr = Equality();
+
+    if (Match(EQUAL)) {
+      Token equals = Previous();
+      Expr value = Assignment();
+
+      if (expr is Expr.Variable variableExpr) {
+        Token name = variableExpr.Name;
+        return new Expr.Assign(name, value);
+      }
+
+      Error(equals, "Invalid assignment target.");
+    }
+
+    return expr;
   }
 
   private Expr Equality() {
@@ -129,6 +193,8 @@ public class Parser {
     if (Match(NIL)) return new Expr.Literal(null);
 
     if (Match(NUMBER, STRING)) return new Expr.Literal(Previous().Literal);
+
+    if (Match(IDENTIFIER)) return new Expr.Variable(Previous());
 
     if (Match(LEFT_PAREN)) {
       Expr expr = Expression();

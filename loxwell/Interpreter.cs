@@ -5,6 +5,9 @@ using static TokenType;
 
 public class Interpreter : Expr.Visitor<object>, Stmt.Visitor<object>
 {
+
+  private Context _context = new Context();
+
   public void Interpret(List<Stmt> statements) {
     try {
       foreach (Stmt statement in statements) {
@@ -81,6 +84,28 @@ public class Interpreter : Expr.Visitor<object>, Stmt.Visitor<object>
     return null;
   }
 
+  public object VisitVariableExpr(Expr.Variable expr)
+  {
+    return _context.Get(expr.Name);
+  }  
+
+  public object VisitAssignExpr(Expr.Assign expr) 
+  {
+    object value = Evaluate(expr.Value);
+    _context.Assign(expr.Name, value);
+    return value;
+  }
+
+  public object VisitVarStmt(Stmt.VarStmt stmt) {
+    object value = null;
+    if (stmt.Initializer != null) {
+      value = Evaluate(stmt.Initializer);
+    }
+
+    _context.Define(stmt.Name.Lexeme, value);
+    return null;
+  }
+
   public object VisitExpressionStmt(Stmt.ExpressionStmt stmt)
   {
     Evaluate(stmt.Expression);
@@ -92,6 +117,28 @@ public class Interpreter : Expr.Visitor<object>, Stmt.Visitor<object>
     object value = Evaluate(stmt.Expression);
     Console.WriteLine(Stringify(value));    
     return null;
+  }
+
+  public object VisitBlockStmt(Stmt.BlockStmt stmt) 
+  {
+    Context context = new Context(_context);
+    ExecuteBlock(stmt.Statements, context);
+    return null;
+  }
+
+  private void ExecuteBlock(List<Stmt> statements, Context context)
+  {
+    Context previous = _context;
+    try {
+      _context = context;
+
+      foreach (Stmt stmt in statements) {
+        Execute(stmt);
+      }
+
+    } finally {
+      _context = previous;
+    }
   }
 
   private void Execute(Stmt statement) {
