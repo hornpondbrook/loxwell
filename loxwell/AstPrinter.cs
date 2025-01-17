@@ -64,4 +64,9 @@ public class AstPrinter : Expr.Visitor<string>
 
     return sb.ToString();
   }
+
+  public string VisitLogicalExpr(Expr.Logical expr)
+  {
+    throw new NotImplementedException();
+  }
 }

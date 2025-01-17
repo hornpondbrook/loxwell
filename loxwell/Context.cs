@@ -29,7 +29,7 @@ public class Context {
 
   public void Assign(Token name, object value) {
     if (_values.ContainsKey(name.Lexeme)) {
-      _values.Add(name.Lexeme, value);
+      _values[name.Lexeme] = value;
       return;
     }
     if (_enclosing != null) {

@@ -18,6 +18,18 @@ public class Interpreter : Expr.Visitor<object>, Stmt.Visitor<object>
     }
   }
 
+  public object VisitLogicalExpr(Expr.Logical expr) {
+    object left = Evaluate(expr.Left);
+
+    if (expr.Operater.Type == OR) {
+      if (IsTruthy(left)) return left;
+    } else if (expr.Operater.Type == AND) {
+      if (!IsTruthy(left)) return left;
+    }
+
+    return Evaluate(expr.Right);
+  }
+
   public object VisitBinaryExpr(Expr.Binary expr) {
     object left = Evaluate(expr.Left);
     object right = Evaluate(expr.Right);
@@ -116,6 +128,24 @@ public class Interpreter : Expr.Visitor<object>, Stmt.Visitor<object>
   {
     object value = Evaluate(stmt.Expression);
     Console.WriteLine(Stringify(value));    
+    return null;
+  }
+
+  public object VisitIfStmt(Stmt.IfStmt stmt)
+  {
+    if (IsTruthy(Evaluate(stmt.Condition))) {
+      Execute(stmt.ThenBranch);
+    } else if (stmt.ElseBranch != null) {
+      Execute(stmt.ElseBranch);
+    }
+    return null;
+  }
+  
+  public object VisitWhileStmt(Stmt.WhileStmt stmt)
+  {
+    while (IsTruthy(Evaluate(stmt.Condition))) {
+      Execute(stmt.Body);
+    }
     return null;
   }
 

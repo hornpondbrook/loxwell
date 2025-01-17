@@ -7,7 +7,9 @@ using static TokenType;
 /*
 expression     → assignment ;
 assignment     → IDENTIFIER "=" assignment
-               | equality ;
+               | logic_or ;
+logic_or       → logic_and ( "or" logic_and )* ;
+logic_and      → equality ( "and" equality )* ;
 equality       → comparison ( ( "!=" | "==" ) comparison )* ;
 comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
 term           → factor ( ( "-" | "+" ) factor )* ;
@@ -27,11 +29,20 @@ declaration    → varDecl
                | statement ;
 varDecl        → "var" IDENTIFIER ( "=" expression )? ";" ;              
 statement      → exprStmt
+               | ifStmt
+               | whileStmt
+               | forStmt
                | printStmt
-               | block ;
-block          → "{" declaration* "}" ;               
+               | block ;            
 exprStmt       → expression ";" ;
+ifStmt         → "if" "(" expression ")" statement
+               ( "else" statement )? ;
+whileStmt      → "while" "(" expression ")" statement ;
+forStmt        → "for" "(" ( varDecl | exprStmt | ";" )
+                 expression? ";"
+                 expression? ")" statement ;
 printStmt      → "print" expression ";" ;
+block          → "{" declaration* "}" ;   
 */
 
 
@@ -78,10 +89,74 @@ public class Parser {
   }
 
   private Stmt Statement() {
+    if (Match(IF)) return IfStatement();
+    if (Match(WHILE)) return WhileStatement();
+    if (Match(FOR)) return ForStatement();
     if (Match(PRINT)) return PrintStatement();
     if (Match(LEFT_BRACE)) return new Stmt.BlockStmt(Block());
 
     return ExpressionStatement();
+  }
+
+  private Stmt ForStatement() {
+    Consume(LEFT_PAREN, "Expect '(' after 'for'.");
+
+    Stmt initializer;
+    if (Match(SEMICOLON)) {
+      initializer = null;
+    } else if (Match(VAR)) {
+      initializer = VarDeclaration();
+    } else {
+      initializer = ExpressionStatement();
+    }
+
+    Expr condition = null;
+    if (!Match(SEMICOLON)) {
+      condition = Expression();
+    }
+    Consume(SEMICOLON, "Expect ';' after loop condition.");
+
+    Expr increment = null;
+    if (!Match(SEMICOLON)) {
+      increment = Expression();
+    }
+    Consume(RIGHT_PAREN, "Expect ')' after for condition.");
+    
+    Stmt body = Statement();
+    if (increment != null) {
+      body = new Stmt.BlockStmt(new List<Stmt>() { body, new Stmt.ExpressionStmt(increment) });
+    }
+    if (condition == null) condition = new Expr.Literal(true);
+    body = new Stmt.WhileStmt(condition, body);
+    if (initializer != null) {
+      body = new Stmt.BlockStmt(new List<Stmt>() { initializer, body });
+    }
+
+    return body;
+  }
+
+  private Stmt WhileStatement() {
+    Consume(LEFT_PAREN, "Expect '(' after 'while'.");
+    Expr condition = Expression();
+    Consume(RIGHT_PAREN, "Expect ')' after while condition.");
+
+    Stmt body = Statement();
+
+    return new Stmt.WhileStmt(condition, body);
+  }
+
+  private Stmt IfStatement() {
+    Consume(LEFT_PAREN, "Expect '(' after 'if'.");
+    Expr condition = Expression();
+    Consume(RIGHT_PAREN, "Expect ')' after if condition.");
+
+    Stmt thenBranch = Statement();
+    Stmt elseBranch = null;
+    if (Match(ELSE)) {
+      elseBranch = Statement();
+    }
+
+    return new Stmt.IfStmt(condition, thenBranch, elseBranch);
   }
 
   private List<Stmt> Block() {
@@ -112,7 +187,7 @@ public class Parser {
   }
 
   private Expr Assignment() {
-    Expr expr = Equality();
+    Expr expr = Or();
 
     if (Match(EQUAL)) {
       Token equals = Previous();
@@ -124,6 +199,31 @@ public class Parser {
       }
 
       Error(equals, "Invalid assignment target.");
+    }
+
+    return expr;
+  }
+
+  private Expr Or() {
+    Expr expr = And();
+
+    while (Match(OR)) {
+      Token operater = Previous();
+      Expr right = And();
+      expr = new Expr.Logical(expr, operater, right);
+    }
+
+    return expr;
+
+  }
+
+  private Expr And() {
+    Expr expr = Equality();
+
+    while (Match(AND)) {
+      Token operater = Previous();
+      Expr right = Equality();
+      expr = new Expr.Logical(expr, operater, right);
     }
 
     return expr;

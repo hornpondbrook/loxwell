@@ -16,14 +16,17 @@ public class GenerateAst {
       "Binary   : Expr left, Token operater, Expr right",
       "Grouping : Expr expression",
       "Literal  : Object value",
+      "Logical  : Expr left, Token operater, Expr right",
       "Unary    : Token operater, Expr right",
       "Variable : Token name"      
     });
 
     DefineAst(outputDir, "Stmt", new List<string> {
-      "BlockStmt      : List<Stmt> statements",
       "ExpressionStmt : Expr expression",
       "PrintStmt      : Expr expression",
+      "IfStmt         : Expr condition, Stmt thenBranch, Stmt elseBranch",    
+      "WhileStmt      : Expr condition, Stmt body",
+      "BlockStmt      : List<Stmt> statements",
       "VarStmt        : Token name, Expr initializer" 
     });
 

@@ -6,6 +6,7 @@ public abstract class Expr {
     R VisitBinaryExpr (Binary expr);
     R VisitGroupingExpr (Grouping expr);
     R VisitLiteralExpr (Literal expr);
+    R VisitLogicalExpr (Logical expr);
     R VisitUnaryExpr (Unary expr);
     R VisitVariableExpr (Variable expr);
   }
@@ -58,6 +59,21 @@ public abstract class Expr {
     }
 
     public readonly Object Value;
+  }
+  public class Logical : Expr {
+    public Logical(Expr left, Token operater, Expr right) {
+      Left = left;
+      Operater = operater;
+      Right = right;
+    }
+
+    public override R Accept<R>(Visitor<R> visitor) {
+      return visitor.VisitLogicalExpr(this);
+    }
+
+    public readonly Expr Left;
+    public readonly Token Operater;
+    public readonly Expr Right;
   }
   public class Unary : Expr {
     public Unary(Token operater, Expr right) {
