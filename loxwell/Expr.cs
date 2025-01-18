@@ -8,6 +8,7 @@ public abstract class Expr {
     R VisitLiteralExpr (Literal expr);
     R VisitLogicalExpr (Logical expr);
     R VisitUnaryExpr (Unary expr);
+    R VisitCallExpr (Call expr);
     R VisitVariableExpr (Variable expr);
   }
   public class Assign : Expr {
@@ -87,6 +88,21 @@ public abstract class Expr {
 
     public readonly Token Operater;
     public readonly Expr Right;
+  }
+  public class Call : Expr {
+    public Call(Expr callee, Token paren, List<Expr> arguments) {
+      Callee = callee;
+      Paren = paren;
+      Arguments = arguments;
+    }
+
+    public override R Accept<R>(Visitor<R> visitor) {
+      return visitor.VisitCallExpr(this);
+    }
+
+    public readonly Expr Callee;
+    public readonly Token Paren;
+    public readonly List<Expr> Arguments;
   }
   public class Variable : Expr {
     public Variable(Token name) {

@@ -1,13 +1,37 @@
 namespace loxwell;
 
 using System.Collections;
+using System.Reflection.Metadata.Ecma335;
 using static TokenType;
 
 public class Interpreter : Expr.Visitor<object>, Stmt.Visitor<object>
 {
 
-  private Context _context = new Context();
+  public readonly Context Globals = new Context();
+  private Context _context;
 
+  private class Clock : LoxCallable
+  {
+    public int Arity()
+    {
+      return 0;
+    }
+
+    public object Call(Interpreter interpreter, List<object> arguments)
+    {
+      return (long)(DateTime.UtcNow - DateTime.UnixEpoch).TotalSeconds;
+    }
+
+    public override string ToString() {
+      return "<native fn>";
+    }
+  }
+
+  public Interpreter() {
+    _context = Globals;
+
+    Globals.Define("clock", new Clock());
+  }
   public void Interpret(List<Stmt> statements) {
     try {
       foreach (Stmt statement in statements) {
@@ -108,6 +132,27 @@ public class Interpreter : Expr.Visitor<object>, Stmt.Visitor<object>
     return value;
   }
 
+  public object VisitCallExpr(Expr.Call expr)
+  {
+    object callee = Evaluate(expr.Callee);
+
+    List<object> arguments = new List<object>();
+    foreach (Expr argument in expr.Arguments) {
+      arguments.Add(Evaluate(argument));
+    }
+
+    if (callee is LoxCallable function) {
+      if (arguments.Count != function.Arity()) {
+        throw new RuntimeError(expr.Paren, 
+          $"Expected {function.Arity()} arguments but got {arguments.Count} .");
+      }
+      return function.Call(this, arguments);  
+    } else {
+      throw new RuntimeError(expr.Paren, 
+        "Can only call functions and classes.");
+    }
+  }
+
   public object VisitVarStmt(Stmt.VarStmt stmt) {
     object value = null;
     if (stmt.Initializer != null) {
@@ -156,7 +201,21 @@ public class Interpreter : Expr.Visitor<object>, Stmt.Visitor<object>
     return null;
   }
 
-  private void ExecuteBlock(List<Stmt> statements, Context context)
+  public object VisitFunctionStmt(Stmt.FunctionStmt stmt)
+  {
+    LoxFunction function = new LoxFunction(stmt, _context);
+    _context.Define(stmt.Name.Lexeme, function);
+    return null;
+  }
+
+  public object VisitReturnStmt(Stmt.ReturnStmt stmt) {
+    object value = null;
+    if (stmt.Value != null) value = Evaluate(stmt.Value);
+    
+    throw new Return(value);
+  }
+
+  public void ExecuteBlock(List<Stmt> statements, Context context)
   {
     Context previous = _context;
     try {

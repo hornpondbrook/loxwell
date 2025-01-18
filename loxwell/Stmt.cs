@@ -4,9 +4,11 @@ public abstract class Stmt {
   public interface Visitor<R> {
     R VisitExpressionStmt (ExpressionStmt stmt);
     R VisitPrintStmt (PrintStmt stmt);
+    R VisitFunctionStmt (FunctionStmt stmt);
     R VisitIfStmt (IfStmt stmt);
     R VisitWhileStmt (WhileStmt stmt);
     R VisitBlockStmt (BlockStmt stmt);
+    R VisitReturnStmt (ReturnStmt stmt);
     R VisitVarStmt (VarStmt stmt);
   }
   public class ExpressionStmt : Stmt {
@@ -30,6 +32,21 @@ public abstract class Stmt {
     }
 
     public readonly Expr Expression;
+  }
+  public class FunctionStmt : Stmt {
+    public FunctionStmt(Token name, List<Token> parameters, List<Stmt> body) {
+      Name = name;
+      Parameters = parameters;
+      Body = body;
+    }
+
+    public override R Accept<R>(Visitor<R> visitor) {
+      return visitor.VisitFunctionStmt(this);
+    }
+
+    public readonly Token Name;
+    public readonly List<Token> Parameters;
+    public readonly List<Stmt> Body;
   }
   public class IfStmt : Stmt {
     public IfStmt(Expr condition, Stmt thenBranch, Stmt elseBranch) {
@@ -69,6 +86,19 @@ public abstract class Stmt {
     }
 
     public readonly List<Stmt> Statements;
+  }
+  public class ReturnStmt : Stmt {
+    public ReturnStmt(Token keyword, Expr value) {
+      Keyword = keyword;
+      Value = value;
+    }
+
+    public override R Accept<R>(Visitor<R> visitor) {
+      return visitor.VisitReturnStmt(this);
+    }
+
+    public readonly Token Keyword;
+    public readonly Expr Value;
   }
   public class VarStmt : Stmt {
     public VarStmt(Token name, Expr initializer) {
