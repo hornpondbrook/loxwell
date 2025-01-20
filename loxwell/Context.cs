@@ -2,42 +2,60 @@ namespace loxwell;
 
 public class Context {
 
-  private readonly Context _enclosing;
-  private readonly Dictionary<string, object> _values = new Dictionary<string, object>();
+  public readonly Dictionary<string, object> Values = new Dictionary<string, object>();
+
+  public readonly Context Enclosing;
 
   public Context() {
-    _enclosing = null;
+    Enclosing = null;
   }
 
   public Context(Context enclosing) {
-    _enclosing = enclosing;
+    Enclosing = enclosing;
   }
 
   public void Define(string name, object value) {
-    _values.Add(name, value);
+    Values.Add(name, value);
   }
 
   public object Get(Token name) {
-    if (_values.ContainsKey(name.Lexeme)) {
-      return _values[name.Lexeme];
+    if (Values.ContainsKey(name.Lexeme)) {
+      return Values[name.Lexeme];
     }
-    if (_enclosing != null) return _enclosing.Get(name);
+    if (Enclosing != null) return Enclosing.Get(name);
 
     throw new RuntimeError(name, 
       $"Undefined variable '{name.Lexeme}'.");
   }
 
   public void Assign(Token name, object value) {
-    if (_values.ContainsKey(name.Lexeme)) {
-      _values[name.Lexeme] = value;
+    if (Values.ContainsKey(name.Lexeme)) {
+      Values[name.Lexeme] = value;
       return;
     }
-    if (_enclosing != null) {
-      _enclosing.Assign(name, value);
+    if (Enclosing != null) {
+      Enclosing.Assign(name, value);
       return;
     } 
 
     throw new RuntimeError(name, 
       $"Undefined variable '{name.Lexeme}'.");
   }
+
+  public object GetAt(int distance, string name) {
+    return Ancestor(distance).Values[name];
+  }
+
+  public void AssignAt(int distance, Token name, object value) {
+    Ancestor(distance).Values[name.Lexeme] = value;
+  }
+
+  private Context Ancestor(int distance) {
+    Context context = this;
+    for (int i = 0; i < distance; i++) {
+      context = context.Enclosing;
+    }
+    return context;
+  }
+
 }
