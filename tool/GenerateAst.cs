@@ -21,6 +21,7 @@ public class GenerateAst {
       "Call     : Expr callee, Token paren, List<Expr> arguments",
       "Get      : Expr instance, Token name",
       "Set      : Expr instance, Token name, Expr value",
+      "Super    : Token keyword, Token method",
       "This     : Token keyword",
       "Variable : Token name"
     });
@@ -29,7 +30,7 @@ public class GenerateAst {
       "ExpressionStmt : Expr expression",
       "PrintStmt      : Expr expression",
       "FunctionStmt   : Token name, List<Token> parameters, List<Stmt> body",
-      "ClassStmt      : Token name, List<Stmt.FunctionStmt> methods",
+      "ClassStmt      : Token name, Expr.Variable superclass, List<Stmt.FunctionStmt> methods",
       "IfStmt         : Expr condition, Stmt thenBranch, Stmt elseBranch",
       "WhileStmt      : Expr condition, Stmt body",
       "BlockStmt      : List<Stmt> statements",

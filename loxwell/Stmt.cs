@@ -50,8 +50,9 @@ public abstract class Stmt {
     public readonly List<Stmt> Body;
   }
   public class ClassStmt : Stmt {
-    public ClassStmt(Token name, List<Stmt.FunctionStmt> methods) {
+    public ClassStmt(Token name, Expr.Variable superclass, List<Stmt.FunctionStmt> methods) {
       Name = name;
+      Superclass = superclass;
       Methods = methods;
     }
 
@@ -60,6 +61,7 @@ public abstract class Stmt {
     }
 
     public readonly Token Name;
+    public readonly Expr.Variable Superclass;
     public readonly List<Stmt.FunctionStmt> Methods;
   }
   public class IfStmt : Stmt {

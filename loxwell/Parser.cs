@@ -18,10 +18,9 @@ factor         → unary ( ( "/" | "*" ) unary )* ;
 unary          → ( "!" | "-" ) unary | call ;
 call           → primary ( "(" arguments? ")" | "." IDENTIFIER )* ;
 arguments      → expression ( "," expression )* ;
-primary        → "true" | "false" | "nil"
-               | NUMBER | STRING
-               | "(" expression ")"
-               | IDENTIFIER ;
+primary        → "true" | "false" | "nil" | "this"
+               | NUMBER | STRING | IDENTIFIER | "(" expression ")"
+               | "super" "." IDENTIFIER ;
 */
 
 // Parse for the program with two types of statement
@@ -31,7 +30,8 @@ declaration    → classDecl
                | funDecl
                | varDecl
                | statement ;
-classDecl      → "class" IDENTIFIER "{" function* "}" ;               
+classDecl      → "class" IDENTIFIER ( "<" IDENTIFIER )?
+                 "{" function* "}" ;           
 funDecl        → "fun" function ;
 function       → IDENTIFIER "(" parameters? ")" block ;     
 parameters     → IDENTIFIER ( "," IDENTIFIER )* ;          
@@ -90,6 +90,13 @@ public class Parser {
 
   private Stmt ClassDeclaration() {
     Token name = Consume(IDENTIFIER, "Expect class name.");
+
+    Expr.Variable superclass = null;
+    if (Match(LESS)) {
+      Consume(IDENTIFIER, "Expect superclass name.");
+      superclass = new Expr.Variable(Previous());
+    }
+
     Consume(LEFT_BRACE, "Expect '{' before class body.");
 
     List<Stmt.FunctionStmt> methods = new List<Stmt.FunctionStmt>();
@@ -99,7 +106,7 @@ public class Parser {
 
     Consume(RIGHT_BRACE, "Expect '}' after class body.");
 
-    return new Stmt.ClassStmt(name, methods);
+    return new Stmt.ClassStmt(name, superclass, methods);
   }
 
   private Stmt.FunctionStmt Function(string kind) {
@@ -385,6 +392,12 @@ public class Parser {
     if (Match(NIL)) return new Expr.Literal(null);
 
     if (Match(NUMBER, STRING)) return new Expr.Literal(Previous().Literal);
+    if (Match(SUPER)) {
+      Token keyword = Previous();
+      Consume(DOT, "Expect '.' after 'super'.");
+      Token method = Consume(IDENTIFIER, "Expect superclass method name.");
+      return new Expr.Super(keyword, method);
+    }
     if (Match(THIS)) return new Expr.This(Previous());
     if (Match(IDENTIFIER)) return new Expr.Variable(Previous());
 

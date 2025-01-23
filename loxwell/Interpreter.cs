@@ -183,6 +183,19 @@ public class Interpreter : Expr.Visitor<object>, Stmt.Visitor<object> {
     return value;
   }
 
+  public object VisitSuperExpr(Expr.Super expr) {
+    int distance = _locals[expr];
+    LoxClass superclass = (LoxClass)_context.GetAt(distance, "super");
+    LoxInstance instance = (LoxInstance)_context.GetAt(distance - 1, "this");
+    LoxFunction method = superclass.FindMethod(expr.Method.Lexeme);
+    if (method == null) {
+      throw new RuntimeError(expr.Method,
+        $"Undefined property '{expr.Method.Lexeme}'.");
+    }
+
+    return method.Bind(instance);
+  }
+
   public object VisitThisExpr(Expr.This expr) {
     return LookupVariable(expr.Keyword, expr);
   }
@@ -244,7 +257,21 @@ public class Interpreter : Expr.Visitor<object>, Stmt.Visitor<object> {
   }
 
   public object VisitClassStmt(Stmt.ClassStmt stmt) {
+    object superclass = null;
+    if (stmt.Superclass != null) {
+      superclass = Evaluate(stmt.Superclass);
+      if (!(superclass is LoxClass)) {
+        throw new RuntimeError(stmt.Superclass.Name,
+          "Superclass must be a class.");
+      }
+    }
+
     _context.Define(stmt.Name.Lexeme, null);
+
+    if (stmt.Superclass != null) {
+      _context = new Context(_context);
+      _context.Define("super", superclass);
+    }
 
     Dictionary<string, LoxFunction> methods = new Dictionary<string, LoxFunction>();
     foreach (Stmt.FunctionStmt method in stmt.Methods) {
@@ -253,7 +280,13 @@ public class Interpreter : Expr.Visitor<object>, Stmt.Visitor<object> {
       methods.Add(method.Name.Lexeme, function);
     }
 
-    LoxClass klass = new LoxClass(stmt.Name.Lexeme, methods);
+    LoxClass klass = new LoxClass(stmt.Name.Lexeme, (LoxClass)superclass,
+                                  methods);
+
+    if (superclass != null) {
+      _context = _context.Enclosing;
+    }
+
     _context.Assign(stmt.Name, klass);
     return null;
   }

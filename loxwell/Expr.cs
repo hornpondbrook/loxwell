@@ -11,6 +11,7 @@ public abstract class Expr {
     R VisitCallExpr (Call expr);
     R VisitGetExpr (Get expr);
     R VisitSetExpr (Set expr);
+    R VisitSuperExpr (Super expr);
     R VisitThisExpr (This expr);
     R VisitVariableExpr (Variable expr);
   }
@@ -134,6 +135,19 @@ public abstract class Expr {
     public readonly Expr Instance;
     public readonly Token Name;
     public readonly Expr Value;
+  }
+  public class Super : Expr {
+    public Super(Token keyword, Token method) {
+      Keyword = keyword;
+      Method = method;
+    }
+
+    public override R Accept<R>(Visitor<R> visitor) {
+      return visitor.VisitSuperExpr(this);
+    }
+
+    public readonly Token Keyword;
+    public readonly Token Method;
   }
   public class This : Expr {
     public This(Token keyword) {

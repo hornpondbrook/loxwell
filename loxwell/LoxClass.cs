@@ -3,10 +3,13 @@ namespace loxwell;
 
 public class LoxClass : LoxCallable {
   public readonly string Name;
+  public readonly LoxClass Superclass;
   public readonly Dictionary<string, LoxFunction> Methods;
 
-  public LoxClass(string name, Dictionary<string, LoxFunction> methods) {
+  public LoxClass(string name, LoxClass superclass,
+                  Dictionary<string, LoxFunction> methods) {
     Name = name;
+    Superclass = superclass;
     Methods = methods;
   }
 
@@ -28,6 +31,9 @@ public class LoxClass : LoxCallable {
   public LoxFunction FindMethod(string name) {
     if (Methods.ContainsKey(name)) {
       return Methods[name];
+    }
+    if (Superclass != null) {
+      return Superclass.FindMethod(name);
     }
     return null;
   }
