@@ -19,24 +19,27 @@ public class GenerateAst {
       "Logical  : Expr left, Token operater, Expr right",
       "Unary    : Token operater, Expr right",
       "Call     : Expr callee, Token paren, List<Expr> arguments",
-      "Variable : Token name"      
+      "Get      : Expr instance, Token name",
+      "Set      : Expr instance, Token name, Expr value",
+      "This     : Token keyword",
+      "Variable : Token name"
     });
 
     DefineAst(outputDir, "Stmt", new List<string> {
       "ExpressionStmt : Expr expression",
       "PrintStmt      : Expr expression",
       "FunctionStmt   : Token name, List<Token> parameters, List<Stmt> body",
-      "IfStmt         : Expr condition, Stmt thenBranch, Stmt elseBranch",    
+      "ClassStmt      : Token name, List<Stmt.FunctionStmt> methods",
+      "IfStmt         : Expr condition, Stmt thenBranch, Stmt elseBranch",
       "WhileStmt      : Expr condition, Stmt body",
       "BlockStmt      : List<Stmt> statements",
       "ReturnStmt     : Token keyword, Expr value",
-      "VarStmt        : Token name, Expr initializer" 
+      "VarStmt        : Token name, Expr initializer"
     });
 
   }
 
-  private static void DefineAst(string outputDir, string baseName, List<string> types)
-  {
+  private static void DefineAst(string outputDir, string baseName, List<string> types) {
     string path = Path.Combine(outputDir, $"{baseName}.cs");
 
     try {
@@ -65,8 +68,7 @@ public class GenerateAst {
     }
   }
 
-  private static void DefineVisitor(StreamWriter writer, string baseName, List<string> types)
-  {
+  private static void DefineVisitor(StreamWriter writer, string baseName, List<string> types) {
     writer.WriteLine($"  public interface Visitor<R> {{");
 
     foreach (string type in types) {
@@ -78,8 +80,7 @@ public class GenerateAst {
     writer.WriteLine("  }");
   }
 
-  private static void DefineType(StreamWriter writer, string baseName, string className, string fieldList)
-  {
+  private static void DefineType(StreamWriter writer, string baseName, string className, string fieldList) {
     writer.WriteLine($"  public class {className} : {baseName} {{");
 
     // Constructor.

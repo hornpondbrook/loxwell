@@ -7,7 +7,7 @@ using static TokenType;
 // Parse for the following expression grammar
 /*
 expression     → assignment ;
-assignment     → IDENTIFIER "=" assignment
+assignment     → ( call "." )? IDENTIFIER "=" assignment
                | logic_or ;
 logic_or       → logic_and ( "or" logic_and )* ;
 logic_and      → equality ( "and" equality )* ;
@@ -16,7 +16,7 @@ comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
 term           → factor ( ( "-" | "+" ) factor )* ;
 factor         → unary ( ( "/" | "*" ) unary )* ;
 unary          → ( "!" | "-" ) unary | call ;
-call           → primary ( "(" arguments? ")" )* ;
+call           → primary ( "(" arguments? ")" | "." IDENTIFIER )* ;
 arguments      → expression ( "," expression )* ;
 primary        → "true" | "false" | "nil"
                | NUMBER | STRING
@@ -27,9 +27,11 @@ primary        → "true" | "false" | "nil"
 // Parse for the program with two types of statement
 /*
 program        → declaration* EOF ;
-declaration    → funDecl
+declaration    → classDecl
+               | funDecl
                | varDecl
                | statement ;
+classDecl      → "class" IDENTIFIER "{" function* "}" ;               
 funDecl        → "fun" function ;
 function       → IDENTIFIER "(" parameters? ")" block ;     
 parameters     → IDENTIFIER ( "," IDENTIFIER )* ;          
@@ -55,7 +57,7 @@ block          → "{" declaration* "}" ;
 
 
 public class Parser {
-  private class ParseError : Exception {}
+  private class ParseError : Exception { }
   private readonly List<Token> _tokens;
   private int _current = 0;
 
@@ -74,9 +76,10 @@ public class Parser {
 
   private Stmt Declaration() {
     try {
+      if (Match(CLASS)) return ClassDeclaration();
       if (Match(FUN)) return Function("function");
       if (Match(VAR)) return VarDeclaration();
-      
+
       return Statement();
     } catch (ParseError error) {
       Synchronize();
@@ -85,7 +88,21 @@ public class Parser {
 
   }
 
-  private Stmt Function(string kind) {
+  private Stmt ClassDeclaration() {
+    Token name = Consume(IDENTIFIER, "Expect class name.");
+    Consume(LEFT_BRACE, "Expect '{' before class body.");
+
+    List<Stmt.FunctionStmt> methods = new List<Stmt.FunctionStmt>();
+    while (!Check(RIGHT_BRACE) && !IsAtEnd()) {
+      methods.Add(Function("method"));
+    }
+
+    Consume(RIGHT_BRACE, "Expect '}' after class body.");
+
+    return new Stmt.ClassStmt(name, methods);
+  }
+
+  private Stmt.FunctionStmt Function(string kind) {
     Token name = Consume(IDENTIFIER, $"Expect {kind} name.");
     Consume(LEFT_PAREN, $"Expect '(' after {kind} name.");
     List<Token> parameters = new List<Token>();
@@ -160,7 +177,7 @@ public class Parser {
       increment = Expression();
     }
     Consume(RIGHT_PAREN, "Expect ')' after for condition.");
-    
+
     Stmt body = Statement();
     if (increment != null) {
       body = new Stmt.BlockStmt(new List<Stmt>() { body, new Stmt.ExpressionStmt(increment) });
@@ -235,6 +252,8 @@ public class Parser {
       if (expr is Expr.Variable variableExpr) {
         Token name = variableExpr.Name;
         return new Expr.Assign(name, value);
+      } else if (expr is Expr.Get getExpr) {
+        return new Expr.Set(getExpr.Instance, getExpr.Name, value);
       }
 
       Error(equals, "Invalid assignment target.");
@@ -321,7 +340,7 @@ public class Parser {
       Token operater = Previous();
       Expr right = Unary();
       return new Expr.Unary(operater, right);
-    } 
+    }
 
     return Call();
   }
@@ -329,9 +348,12 @@ public class Parser {
   private Expr Call() {
     Expr expr = Primary();
 
-    while(true) {
+    while (true) {
       if (Match(LEFT_PAREN)) {
         expr = FinishCall(expr);
+      } else if (Match(DOT)) {
+        Token name = Consume(IDENTIFIER, "Expect property name after '.'.");
+        expr = new Expr.Get(expr, name);
       } else {
         break;
       }
@@ -363,7 +385,7 @@ public class Parser {
     if (Match(NIL)) return new Expr.Literal(null);
 
     if (Match(NUMBER, STRING)) return new Expr.Literal(Previous().Literal);
-
+    if (Match(THIS)) return new Expr.This(Previous());
     if (Match(IDENTIFIER)) return new Expr.Variable(Previous());
 
     if (Match(LEFT_PAREN)) {
@@ -374,7 +396,7 @@ public class Parser {
 
     throw Error(Peek(), "Expect expression.");
   }
-  
+
   private bool Match(params TokenType[] types) {
     foreach (TokenType type in types) {
       if (Check(type)) {
@@ -389,7 +411,7 @@ public class Parser {
   private Token Consume(TokenType type, string message) {
     if (Check(type)) return Advance();
 
-    throw Error(Peek(), message);    
+    throw Error(Peek(), message);
   }
 
   private ParseError Error(Token token, string message) {

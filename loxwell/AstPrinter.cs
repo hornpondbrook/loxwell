@@ -2,8 +2,7 @@ using System.Text;
 
 namespace loxwell;
 
-public class AstPrinter : Expr.Visitor<string>
-{
+public class AstPrinter : Expr.Visitor<string> {
 
   // static void Main(string[] args) {
   //   Expr expression = new Expr.Binary(
@@ -21,38 +20,32 @@ public class AstPrinter : Expr.Visitor<string>
     return expr.Accept(this);
   }
 
-  public string VisitBinaryExpr(Expr.Binary expr)
-  {
+  public string VisitBinaryExpr(Expr.Binary expr) {
     return Parenthesize(expr.Operater.Lexeme, expr.Left, expr.Right);
   }
 
-  public string VisitGroupingExpr(Expr.Grouping expr)
-  {
+  public string VisitGroupingExpr(Expr.Grouping expr) {
     return Parenthesize("group", expr.Expression);
   }
 
-  public string VisitLiteralExpr(Expr.Literal expr)
-  {
+  public string VisitLiteralExpr(Expr.Literal expr) {
     // if (expr.Value == null) return "nul";
     // return expr.Value.ToString();
     return expr.Value?.ToString() ?? "nul";
   }
 
-  public string VisitUnaryExpr(Expr.Unary expr)
-  {
+  public string VisitUnaryExpr(Expr.Unary expr) {
     return Parenthesize(expr.Operater.Lexeme, expr.Right);
   }
 
-  public string VisitVariableExpr(Expr.Variable expr)
-  {
+  public string VisitVariableExpr(Expr.Variable expr) {
     throw new NotImplementedException();
   }
 
-  public string VisitAssignExpr(Expr.Assign expr)
-  {
+  public string VisitAssignExpr(Expr.Assign expr) {
     throw new NotImplementedException();
   }
-  
+
   private string Parenthesize(string name, params Expr[] exprs) {
     StringBuilder sb = new StringBuilder();
 
@@ -65,13 +58,23 @@ public class AstPrinter : Expr.Visitor<string>
     return sb.ToString();
   }
 
-  public string VisitLogicalExpr(Expr.Logical expr)
-  {
+  public string VisitLogicalExpr(Expr.Logical expr) {
     throw new NotImplementedException();
   }
 
-  public string VisitCallExpr(Expr.Call expr)
-  {
+  public string VisitCallExpr(Expr.Call expr) {
+    throw new NotImplementedException();
+  }
+
+  public string VisitGetExpr(Expr.Get expr) {
+    throw new NotImplementedException();
+  }
+
+  public string VisitSetExpr(Expr.Set expr) {
+    throw new NotImplementedException();
+  }
+
+  public string VisitThisExpr(Expr.This expr) {
     throw new NotImplementedException();
   }
 }

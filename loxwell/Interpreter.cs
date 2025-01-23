@@ -1,6 +1,7 @@
 namespace loxwell;
 
 using System.Collections;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection.Metadata.Ecma335;
 using static TokenType;
 
@@ -161,6 +162,31 @@ public class Interpreter : Expr.Visitor<object>, Stmt.Visitor<object> {
     }
   }
 
+  public object VisitGetExpr(Expr.Get expr) {
+    object instance = Evaluate(expr.Instance);
+    if (instance is LoxInstance loxInstance) {
+      return loxInstance.Get(expr.Name);
+    }
+
+    throw new RuntimeError(expr.Name, "Only instances have properties.");
+  }
+
+  public object VisitSetExpr(Expr.Set expr) {
+    object instance = Evaluate(expr.Instance);
+
+    if (!(instance is LoxInstance)) {
+      throw new RuntimeError(expr.Name, "Only instances have fields.");
+    }
+
+    object value = Evaluate(expr.Value);
+    ((LoxInstance)instance).Set(expr.Name, value);
+    return value;
+  }
+
+  public object VisitThisExpr(Expr.This expr) {
+    return LookupVariable(expr.Keyword, expr);
+  }
+
   public object VisitVarStmt(Stmt.VarStmt stmt) {
     object value = null;
     if (stmt.Initializer != null) {
@@ -205,7 +231,7 @@ public class Interpreter : Expr.Visitor<object>, Stmt.Visitor<object> {
   }
 
   public object VisitFunctionStmt(Stmt.FunctionStmt stmt) {
-    LoxFunction function = new LoxFunction(stmt, _context);
+    LoxFunction function = new LoxFunction(stmt, _context, false);
     _context.Define(stmt.Name.Lexeme, function);
     return null;
   }
@@ -215,6 +241,21 @@ public class Interpreter : Expr.Visitor<object>, Stmt.Visitor<object> {
     if (stmt.Value != null) value = Evaluate(stmt.Value);
 
     throw new Return(value);
+  }
+
+  public object VisitClassStmt(Stmt.ClassStmt stmt) {
+    _context.Define(stmt.Name.Lexeme, null);
+
+    Dictionary<string, LoxFunction> methods = new Dictionary<string, LoxFunction>();
+    foreach (Stmt.FunctionStmt method in stmt.Methods) {
+      LoxFunction function = new LoxFunction(method, _context,
+        method.Name.Lexeme.Equals("init"));
+      methods.Add(method.Name.Lexeme, function);
+    }
+
+    LoxClass klass = new LoxClass(stmt.Name.Lexeme, methods);
+    _context.Assign(stmt.Name, klass);
+    return null;
   }
 
   public void ExecuteBlock(List<Stmt> statements, Context context) {

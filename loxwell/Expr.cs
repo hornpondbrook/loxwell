@@ -9,6 +9,9 @@ public abstract class Expr {
     R VisitLogicalExpr (Logical expr);
     R VisitUnaryExpr (Unary expr);
     R VisitCallExpr (Call expr);
+    R VisitGetExpr (Get expr);
+    R VisitSetExpr (Set expr);
+    R VisitThisExpr (This expr);
     R VisitVariableExpr (Variable expr);
   }
   public class Assign : Expr {
@@ -103,6 +106,45 @@ public abstract class Expr {
     public readonly Expr Callee;
     public readonly Token Paren;
     public readonly List<Expr> Arguments;
+  }
+  public class Get : Expr {
+    public Get(Expr instance, Token name) {
+      Instance = instance;
+      Name = name;
+    }
+
+    public override R Accept<R>(Visitor<R> visitor) {
+      return visitor.VisitGetExpr(this);
+    }
+
+    public readonly Expr Instance;
+    public readonly Token Name;
+  }
+  public class Set : Expr {
+    public Set(Expr instance, Token name, Expr value) {
+      Instance = instance;
+      Name = name;
+      Value = value;
+    }
+
+    public override R Accept<R>(Visitor<R> visitor) {
+      return visitor.VisitSetExpr(this);
+    }
+
+    public readonly Expr Instance;
+    public readonly Token Name;
+    public readonly Expr Value;
+  }
+  public class This : Expr {
+    public This(Token keyword) {
+      Keyword = keyword;
+    }
+
+    public override R Accept<R>(Visitor<R> visitor) {
+      return visitor.VisitThisExpr(this);
+    }
+
+    public readonly Token Keyword;
   }
   public class Variable : Expr {
     public Variable(Token name) {
