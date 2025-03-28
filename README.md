@@ -88,19 +88,19 @@ tool/                 # Code generation tools
 
 ```mermaid
 graph TD
-    A[Source Code] --> B[Scanner]
-    B --> C[Tokens]
-    C --> D[Parser]
-    D --> E[Abstract Syntax Tree (AST)]
-    E --> F[Resolver]
-    F --> G[Interpreter]
-    G --> H[Output / Runtime Errors]
+    A["Source Code"] --> B["Scanner"]
+    B --> C["Tokens"]
+    C --> D["Parser"]
+    D --> E["Abstract Syntax Tree (AST)"]
+    E --> F["Resolver"]
+    F --> G["Interpreter"]
+    G --> H["Output / Runtime Errors"]
 
-    subgraph Runtime Components
-        I[Context]
-        J[LoxCallable]
-        K[LoxClass]
-        L[LoxInstance]
+    subgraph "Runtime Components"
+        I["Context"]
+        J["LoxCallable"]
+        K["LoxClass"]
+        L["LoxInstance"]
     end
 
     G --> I
