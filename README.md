@@ -2,6 +2,9 @@
 
 Loxwell is a C# implementation of the **Lox** programming language, as described in Robert Nystrom's book [Crafting Interpreters](https://www.craftinginterpreters.com/the-lox-language.html). This project aims to provide an interpreter for Lox, written in C#, with features including lexical analysis, parsing, evaluation, and runtime execution.
 
+## Demo
+![App Demo](demo.gif)
+
 ## Features
 
 Loxwell follows the **tree-walk interpreter** model and supports:
